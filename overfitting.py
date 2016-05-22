@@ -5,27 +5,30 @@ import numpy as np
 
 class Overfitting:
 
-	def __init__(self):
-		dataIn= self.getData("in.dta")
-		dataOut = self.getData("out.dta")
+	def __init__(self, lamba=None):
+		dataIn= self.getData("./data/in.dta")
+		dataOut = self.getData("./data/out.dta")
 
 		self.nonLinearData = self.convertDataToNonLinear(dataIn)
 		nonLinearDataOut = self.convertDataToNonLinear(dataOut)
 
-		self.w = self.computeDecayWeightW(self.nonLinearData, 10**(-3))
+		self.w = self.computeW(self.nonLinearData, lamba)
 
 		print("In-sample classification errors:", self.getClassificationError(self.nonLinearData))
 		print("Out-of-sample classification errors:", self.getClassificationError(nonLinearDataOut))
 
 
-	def computeW(self, data):
-		"""Computes W by using the linear regression algorithm"""
+	def computeW(self, data, lamba=None):
+		"""Computes W by using the linear regression algorithm with/without adding weight decay"""
 		#We first construct the matrix X and the vector Y from data set
 		self.constructX(data)
 		self.constructY(data)
 
 		# We compute the pseudo-inverse
-		pseudoInverse =  (((self.X.T * self.X).I) * self.X.T)
+		if lamba == None:
+			pseudoInverse = self.computePseudoInverse()
+		else:
+			pseudoInverse = self.computePseudoInverseDecay(lamba)
 	
 		# We return w = (Pseudo-inverse) y
 		return pseudoInverse * self.Y
@@ -41,6 +44,12 @@ class Overfitting:
 	
 		# We return w = (Pseudo-inverse) y
 		return pseudoInverse * self.Y
+	
+	def computePseudoInverse(self):
+		return (((self.X.T * self.X).I) * self.X.T)
+	
+	def computePseudoInverseDecay(self, lamba):
+		return ((((self.X.T * self.X) + (lamba*np.identity(self.d))).I ) * self.X.T)
 
 	def getData(self, file):
 		data = []
@@ -97,3 +106,4 @@ class Overfitting:
 
 if __name__ == '__main__':
 	overfitting = Overfitting()
+	overfitting = Overfitting(10**(3))

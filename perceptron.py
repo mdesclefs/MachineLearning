@@ -1,11 +1,6 @@
 # -*- coding:utf-8 -*-
 import random
 
-import matplotlib.pyplot as plt
-plt.style.use("bmh")
-
-
-
 class Perceptron:
 
 	def __init__(self, d):
@@ -13,10 +8,13 @@ class Perceptron:
 		self.rangeY = [-1, 1]
 		self.d = d
 
+		self.confusionMatrix = {'tp':0, 'tn':0, 'fp':0, 'fn':0}
 	def getRandomPoint(self):
+        """ Builds a random point made up of two randoms values """
 		return [self.getRandom(), self.getRandom(self.rangeY)]
 
 	def getRandom(self, specificRange=None):
+        """ Pick a random value from a specific or default range """
 		if specificRange == None:
 			return random.uniform(self.rangeX[0], self.rangeX[1])
 		else:
@@ -68,10 +66,12 @@ class Perceptron:
 		print("Average iteration convergence: "+str((avgConverge)))
 		print("Missed probability: "+str((missedProb)))
 
-		return avgConverge, missedProb
+		self.normalizeConfusionMatrix(turn*turn)
+
+		return avgConverge, missedProb, self.confusionMatrix
 
 	def PLA(self, maxIteration):
-
+        """" Executes a run of PLA """
 		self.initWeightVector()
 		iterationNbr = 0
 		while iterationNbr < maxIteration : # The classification is bounded to 5000 turns
@@ -90,6 +90,7 @@ class Perceptron:
 		return iterationNbr
 
 	def computeMissedProbability(self, turn):
+        """ Computes the probability that a point is misclassified """
 		probTmp = 0
 		for j in range(turn):
 			p = self.getRandomPoint()
@@ -99,10 +100,29 @@ class Perceptron:
 			if(y != estimatedY):
 				probTmp+=1
 
+			self.setConfusionClass(y,estimatedY)
+
 		return probTmp/turn
 
+	def setConfusionClass(self, y, h):
+        """ Adds a confusion in the matrix """
+		if (y==h):
+			if(y==1):
+				self.confusionMatrix['tp']+=1
+			else:
+				self.confusionMatrix['tn']+=1
+		else:
+			if(y==1):
+				self.confusionMatrix['fn']+=1
+			else:
+				self.confusionMatrix['fp']+=1
+
+	def normalizeConfusionMatrix(self, turn):
+		for key in self.confusionMatrix:
+			self.confusionMatrix[key]/=turn
+
 	def constructMisclassifiedVector(self):
-		""" Construct the misclassified vector """
+		""" Constructs the misclassified vector """
 		vector = []
 		for data in self.dataset:
 			if self.getH(data[0]) != data[1]: # if the training function gives the wrong class value
@@ -111,76 +131,74 @@ class Perceptron:
 		return vector
 
 	def pickMisclassified(self):
-		""" Pick a random point from the misclassified vector """
+		""" Picks a random point from the misclassified vector """
 		x = self.misclassifiedVector[random.randrange(len(self.misclassifiedVector))]
 		return x
 
 	def getY(self, point):
-		""" Get the point class using the target function """
+		""" Gets the point class using the target function """
 		if ( ((self.target[1][0]-self.target[0][0]) * (point[1]-self.target[0][1])) - ((self.target[1][1]-self.target[0][1]) *(point[0]-self.target[0][0])) > 0): 
 			return 1
 		return -1
 
 
 	def getH(self, point):
-		""" Get the point class using the training function """
+		""" Gets the point class using the training function """
 		if ((self.weightVector[0]) + (self.weightVector[1] * point[0]) + (self.weightVector[2] * point[1]) >= 0):
 			return 1
 		return -1
 
 	def updateW(self, point):
-		""" Update weight vector by classifying a misclassified point """
+		""" Updates weight vector by classifying a misclassified point """
 		y = point[1]
 		self.weightVector[0]+=y
 		self.weightVector[1]+=y*point[0][0]
 		self.weightVector[2]+=y*point[0][1]
 
 if __name__ == '__main__':
+	infile = False
 	perceptron = Perceptron(d=2)
 	#print("N = 10")
-	#perceptron.run(10, 1000)
+	#print(perceptron.run(10, 1000))
 
-	#print("\nN = 100")
-	#perceptron.run(100, 1000)
+	print("\nN = 100")
+	print(perceptron.run(100, 1000))
 
-	"""
-	c= ['b','g','r','c','m','y', "orange","saddlebrown"]
-	"""
-	avgConverge = []
-	missedProb = []
+	if(infile):
+		avgConverge = []
+		missedProb = []
 
-	for n in range(100):
-		tmpConverge, tmpProb = perceptron.run(n, 1000)
-		avgConverge.append(tmpConverge)
-		missedProb.append(tmpProb)
-	
+		for n in range(100):
+			tmpConverge, tmpProb = perceptron.run(n, 1000)
+			avgConverge.append(tmpConverge)
+			missedProb.append(tmpProb)
 
-	nFile = open("nEvolution.txt", 'w')
+			nFile = open("./data/nEvolution.txt", 'w')
 
-	nFile.write(str(avgConverge))
-	nFile.write("\n")
+			nFile.write(str(avgConverge))
+			nFile.write("\n")
 
-	nFile.write(str(missedProb))
-	nFile.write("\n")
+			nFile.write(str(missedProb))
+			nFile.write("\n")
 
-	nFile.close()
+			nFile.close()
 
-	"""
-	avgConverge = []
-	missedProb = []
+		"""
+		avgConverge = []
+		missedProb = []
 
-	for turn in range(1000)
-		tmpConverge, tmpProb = perceptron.run(100, n)
-		avgConverge.append(tmpConverge)
-		missedProb.append(tmpProb)
+		for turn in range(1000)
+			tmpConverge, tmpProb = perceptron.run(100, n)
+			avgConverge.append(tmpConverge)
+			missedProb.append(tmpProb)
 
-	nFile = open("runEvolution.txt", 'w')
+		nFile = open("runEvolution.txt", 'w')
 
-	nFile.write(str(avgConverge))
-	nFile.write("\n")
+		nFile.write(str(avgConverge))
+		nFile.write("\n")
 
-	nFile.write(str(missedProb))
-	nFile.write("\n")
-	"""
+		nFile.write(str(missedProb))
+		nFile.write("\n")
+		"""
 
-	nFile.close()
+		nFile.close()
