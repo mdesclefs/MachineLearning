@@ -13,10 +13,14 @@ class Overfitting:
 		nonLinearDataOut = self.convertDataToNonLinear(dataOut)
 
 		self.w = self.computeW(self.nonLinearData, lamba)
+		
+		inSample = self.getClassificationError(self.nonLinearData)
+		outSample = self.getClassificationError(nonLinearDataOut)
 
-		print("In-sample classification errors:", self.getClassificationError(self.nonLinearData))
-		print("Out-of-sample classification errors:", self.getClassificationError(nonLinearDataOut))
+		print("In-sample classification errors:", inSample)
+		print("Out-of-sample classification errors:", outSample)
 
+		self.error = [inSample, outSample]
 
 	def computeW(self, data, lamba=None):
 		"""Computes W by using the linear regression algorithm with/without adding weight decay"""
@@ -104,6 +108,26 @@ class Overfitting:
 
 		return errorNbr/(len(data))
 
+	def getError(self):
+		return self.error
+
 if __name__ == '__main__':
 	overfitting = Overfitting()
 	overfitting = Overfitting(10**(3))
+	
+	inSample = []
+	outSample= []
+	for k in range(-30, 20):
+		print("\nk =",k)
+		overfitting = Overfitting(10**(k))
+		error = overfitting.getError()
+		inSample.append(error[0])
+		outSample.append(error[1])
+		
+	nFile = open("./data/kEvolution.txt", 'w')
+	nFile.write(str(inSample))
+	nFile.write("\n")
+
+	nFile.write(str(outSample))
+	nFile.write("\n")
+	nFile.close()
